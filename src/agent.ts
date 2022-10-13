@@ -7,8 +7,7 @@ import {
   getEthersProvider,
 } from 'forta-agent';
 import { Logger, LoggerLevel } from './logger';
-import { DataContainer } from './types';
-import { createFinding } from './findings';
+import { BotConfig, DataContainer } from './types';
 
 const data: DataContainer = {} as any;
 const provider = getEthersProvider();
@@ -18,6 +17,7 @@ const botConfig = require('../bot-config.json');
 
 const provideInitialize = (
   data: DataContainer,
+  config: BotConfig,
   provider: providers.JsonRpcProvider,
   logger: Logger,
   isDevelopment: boolean,
@@ -38,18 +38,12 @@ const provideHandleTransaction = (data: DataContainer): HandleTransaction => {
 
     const findings: Finding[] = [];
 
-    data.logger.debug('Transaction', txEvent.hash);
-
-    if (Math.random() <= 0.1) {
-      findings.push(createFinding());
-    }
-
     return findings;
   };
 };
 
 export default {
-  initialize: provideInitialize(data, provider, logger, isDevelopment),
+  initialize: provideInitialize(data, botConfig, provider, logger, isDevelopment),
   handleTransaction: provideHandleTransaction(data),
 
   provideInitialize,
