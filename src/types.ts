@@ -5,9 +5,12 @@ import { Logger } from './logger';
 export type DataContainer = {
   logger: Logger;
   provider: providers.JsonRpcProvider;
+  chainId: number;
   aztecAddresses: string[];
-  etherThreshold: BigNumber;
+  developerAbbreviation: string;
+  depositThresholdInWei: BigNumber;
   observationWindowInSeconds: number;
+  depositsByAddress: Map<string, { timestamp: number; value: BigNumber }[]>;
   isDevelopment: boolean;
   isInitialized: boolean;
 };
