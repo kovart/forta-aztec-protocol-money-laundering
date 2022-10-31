@@ -10,7 +10,7 @@ import {
 import { Logger, LoggerLevel } from './logger';
 import { BotConfig, DataContainer } from './types';
 import { DEPOSIT_EVENT_ABI, ETHER_NOMINATOR } from './contants';
-import { createNativeTokenLaunderingFinding } from './findings';
+import { createNativeTokenLaunderingFinding, createTokenDepositFinding } from './findings';
 
 const data: DataContainer = {} as any;
 const provider = getEthersProvider();
@@ -99,6 +99,15 @@ const provideHandleTransaction = (data: DataContainer): HandleTransaction => {
             depositorAddress,
             totalDepositValue,
             deposits,
+            data.chainId,
+            data.developerAbbreviation,
+          ),
+        );
+      } else {
+        findings.push(
+          createTokenDepositFinding(
+            depositorAddress,
+            depositValue,
             data.chainId,
             data.developerAbbreviation,
           ),
