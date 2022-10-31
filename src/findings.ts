@@ -8,6 +8,28 @@ import { ETHER_NOMINATOR, NATIVE_TOKEN_SYMBOL } from './contants';
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
+export const createTokenDepositFinding = (
+  address: string,
+  depositValue: BigNumber,
+  chainId: Network,
+  developerAbbreviation: string,
+) => {
+  const formattedDepositValue =
+    depositValue.div(ETHER_NOMINATOR).toFormat() + ' ' + NATIVE_TOKEN_SYMBOL[chainId];
+
+  return Finding.from({
+    alertId: `${developerAbbreviation}-AZTEC-PROTOCOL-DEPOSIT-EVENT`,
+    name: 'Aztec Protocol Deposit Event',
+    description: `Account ${address} deposited ${formattedDepositValue}.`,
+    type: FindingType.Info,
+    severity: FindingSeverity.Info,
+    addresses: [address],
+    metadata: {
+      depositValue: depositValue.toString(),
+    },
+  });
+};
+
 export const createNativeTokenLaunderingFinding = (
   address: string,
   totalDepositValue: BigNumber,

@@ -7,7 +7,7 @@ import { TestTransactionEvent } from 'forta-agent-tools/lib/test';
 import { BotConfig, DataContainer } from './types';
 import { Logger, LoggerLevel } from './logger';
 import { DEPOSIT_EVENT_ABI, ETHER_NOMINATOR } from './contants';
-import { createNativeTokenLaunderingFinding } from './findings';
+import { createNativeTokenLaunderingFinding, createTokenDepositFinding } from './findings';
 import agent from './agent';
 
 const { provideInitialize, provideHandleTransaction } = agent;
@@ -109,7 +109,7 @@ describe('Forta agent', () => {
       tx.setFrom(eoaAddress1);
       tx.setTo(defaultAztecAddress1);
       tx.setTimestamp(0);
-      // send value that exceed threshold
+      // send value that exceeds threshold
       tx.setValue(defaultThresholdInWei.plus(1).toString());
 
       const findings = await handleTransaction(tx);
@@ -118,7 +118,31 @@ describe('Forta agent', () => {
       expect(findings).toStrictEqual([]);
     });
 
-    it("returns empty findings if deposited funds don't exceed threshold #1", async () => {
+    it('returns a deposit finding when EOA deposits funds', async () => {
+      const tx = new TestTransactionEvent();
+      tx.setTimestamp(0);
+      tx.setFrom(eoaAddress1);
+      tx.setTo(defaultAztecAddress1);
+
+      const value = new BigNumber(1);
+
+      // add a deposit equal to the threshold value but not exceeding it
+      addDepositEventLog(tx, eoaAddress1, value);
+
+      const findings = await handleTransaction(tx);
+
+      // should contain only deposit finding
+      expect(findings).toStrictEqual([
+        createTokenDepositFinding(
+          eoaAddress1,
+          value,
+          defaultChainId,
+          mockData.developerAbbreviation,
+        ),
+      ]);
+    });
+
+    it("doesn't return a money laundering finding if deposited funds don't exceed threshold #1", async () => {
       const tx = new TestTransactionEvent();
       tx.setTimestamp(0);
       tx.setFrom(eoaAddress1);
@@ -129,49 +153,70 @@ describe('Forta agent', () => {
 
       const findings = await handleTransaction(tx);
 
-      // should not fire any alerts
-      expect(findings).toStrictEqual([]);
+      // should contain only deposit finding
+      expect(findings).toStrictEqual([
+        createTokenDepositFinding(
+          eoaAddress1,
+          defaultThresholdInWei,
+          defaultChainId,
+          mockData.developerAbbreviation,
+        ),
+      ]);
     });
 
-    it("returns empty findings if deposited funds don't exceed threshold #2", async () => {
+    it("doesn't return a money laundering finding if deposited funds don't exceed threshold #2", async () => {
       let tx = new TestTransactionEvent();
       tx.setTimestamp(1);
-      tx.setFrom(eoaAddress2);
+      tx.setFrom(eoaAddress1);
       tx.setTo(defaultAztecAddress1);
 
+      const halfOfThresholdValue = defaultThresholdInWei.div(2).decimalPlaces(0);
+
       // add a deposit equal to half of the threshold value
-      addDepositEventLog(tx, eoaAddress2, defaultThresholdInWei.div(2).decimalPlaces(0));
+      addDepositEventLog(tx, eoaAddress1, halfOfThresholdValue);
 
       let findings = await handleTransaction(tx);
 
-      expect(findings).toStrictEqual([]);
+      expect(findings).toStrictEqual([
+        createTokenDepositFinding(
+          eoaAddress1,
+          halfOfThresholdValue,
+          defaultChainId,
+          mockData.developerAbbreviation,
+        ),
+      ]);
 
       tx = new TestTransactionEvent();
       tx.setTimestamp(2);
-      tx.setFrom(eoaAddress2);
+      tx.setFrom(eoaAddress1);
       tx.setTo(defaultAztecAddress1);
 
       // add a deposit equal to another half of the threshold value
-      addDepositEventLog(tx, eoaAddress2, defaultThresholdInWei.div(2).decimalPlaces(0));
+      addDepositEventLog(tx, eoaAddress1, halfOfThresholdValue);
 
       findings = await handleTransaction(tx);
 
-      // should not fire any alerts because the sum of the deposits does not exceed the threshold
-      expect(findings).toStrictEqual([]);
+      // should not fire money laundering finding because the sum of the deposits does not exceed the threshold
+      expect(findings).toStrictEqual([
+        createTokenDepositFinding(
+          eoaAddress1,
+          halfOfThresholdValue,
+          defaultChainId,
+          mockData.developerAbbreviation,
+        ),
+      ]);
     });
 
-    it('returns empty findings if deposited funds exceed threshold, but observation window is over', async () => {
+    it("doesn't return a money laundering finding if deposited funds exceed threshold, but observation window is over", async () => {
       let tx = new TestTransactionEvent();
       tx.setTimestamp(0);
-      tx.setFrom(eoaAddress2);
+      tx.setFrom(eoaAddress1);
       tx.setTo(defaultAztecAddress1);
 
       // add a deposit equal to the threshold value but not exceeding it
       addDepositEventLog(tx, eoaAddress1, defaultThresholdInWei);
 
-      let findings = await handleTransaction(tx);
-
-      expect(findings).toStrictEqual([]);
+      await handleTransaction(tx);
 
       tx = new TestTransactionEvent();
       // emulate transaction that occurs after observation window is over
@@ -180,15 +225,22 @@ describe('Forta agent', () => {
       tx.setTo(defaultAztecAddress1);
 
       // add a deposit equal to the threshold value but not exceeding it
-      addDepositEventLog(tx, eoaAddress2, defaultThresholdInWei);
+      addDepositEventLog(tx, eoaAddress1, defaultThresholdInWei);
 
-      findings = await handleTransaction(tx);
+      const findings = await handleTransaction(tx);
 
-      // should not fire any alerts because the sum of the deposits does not exceed the threshold within the observation window
-      expect(findings).toStrictEqual([]);
+      // should not fire money laundering finding because the sum of the deposits does not exceed the threshold within the observation window
+      expect(findings).toStrictEqual([
+        createTokenDepositFinding(
+          eoaAddress1,
+          defaultThresholdInWei,
+          defaultChainId,
+          mockData.developerAbbreviation,
+        ),
+      ]);
     });
 
-    it('returns a finding if deposited funds exceed threshold within observation window #1', async () => {
+    it('returns a money laundering if deposited funds exceed threshold within observation window #1', async () => {
       const tx = new TestTransactionEvent();
       const timestamp = 12345;
       const value = defaultThresholdInWei.plus(1);
@@ -212,7 +264,7 @@ describe('Forta agent', () => {
       ]);
     });
 
-    it('returns a finding if deposited funds exceed threshold within observation window #2', async () => {
+    it('returns a money laundering if deposited funds exceed threshold within observation window #2', async () => {
       const firstDepositTimestamp = 100;
       const secondDepositTimestamp =
         firstDepositTimestamp + mockData.observationWindowInSeconds - 1;
@@ -229,7 +281,14 @@ describe('Forta agent', () => {
 
       let findings = await handleTransaction(tx);
 
-      expect(findings).toStrictEqual([]);
+      expect(findings).toStrictEqual([
+        createTokenDepositFinding(
+          eoaAddress1,
+          defaultThresholdInWei,
+          defaultChainId,
+          mockData.developerAbbreviation,
+        ),
+      ]);
 
       tx = new TestTransactionEvent();
       tx.setTimestamp(secondDepositTimestamp);
