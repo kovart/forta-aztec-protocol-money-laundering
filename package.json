@@ -1,6 +1,6 @@
 {
   "name": "ak-forta-aztec-protocol-money-laundering",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "This bot detects when an account makes a deposit to Aztec Protocol and also detects numerous large transfers to it, which may indicate money laundering activity after the hack",
   "chainIds": [
     1
@@ -41,7 +41,7 @@
     "bignumber.js": "^9.1.0",
     "dayjs": "^1.11.5",
     "ethers": "^5.7.1",
-    "forta-agent": "^0.1.10",
+    "forta-agent": "^0.1.15",
     "forta-agent-tools": "^3.1.1"
   },
   "devDependencies": {

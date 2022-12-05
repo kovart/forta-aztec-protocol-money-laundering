@@ -1,4 +1,4 @@
-import { Finding, FindingSeverity, FindingType, Network } from 'forta-agent';
+import { EntityType, Finding, FindingSeverity, FindingType, LabelType, Network } from 'forta-agent';
 import BigNumber from 'bignumber.js';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -24,6 +24,15 @@ export const createTokenDepositFinding = (
     type: FindingType.Info,
     severity: FindingSeverity.Info,
     addresses: [address],
+    labels: [
+      {
+        entityType: EntityType.Address,
+        labelType: LabelType.Mixer,
+        confidence: 1,
+        entity: address,
+        customValue: 'deposit',
+      },
+    ],
     metadata: {
       depositValue: depositValue.toString(),
     },
@@ -60,6 +69,15 @@ export const createNativeTokenLaunderingFinding = (
     type: FindingType.Suspicious,
     severity: FindingSeverity.High,
     addresses: [address],
+    labels: [
+      {
+        entityType: EntityType.Address,
+        labelType: LabelType.Mixer,
+        confidence: 1,
+        entity: address,
+        customValue: 'money-laundering',
+      },
+    ],
     metadata: {
       totalDepositValue: totalDepositValue.toString(),
       deposits: JSON.stringify(sortedRecords),
