@@ -96,6 +96,7 @@ const provideHandleTransaction = (data: DataContainer): HandleTransaction => {
       if (totalDepositValue.isGreaterThan(data.depositThresholdInWei)) {
         findings.push(
           createNativeTokenLaunderingFinding(
+            txEvent.hash,
             depositorAddress,
             totalDepositValue,
             deposits,
@@ -106,6 +107,7 @@ const provideHandleTransaction = (data: DataContainer): HandleTransaction => {
       } else {
         findings.push(
           createTokenDepositFinding(
+            txEvent.hash,
             depositorAddress,
             depositValue,
             data.chainId,

@@ -134,6 +134,7 @@ describe('Forta agent', () => {
       // should contain only deposit finding
       expect(findings).toStrictEqual([
         createTokenDepositFinding(
+          tx.hash,
           eoaAddress1,
           value,
           defaultChainId,
@@ -156,6 +157,7 @@ describe('Forta agent', () => {
       // should contain only deposit finding
       expect(findings).toStrictEqual([
         createTokenDepositFinding(
+          tx.hash,
           eoaAddress1,
           defaultThresholdInWei,
           defaultChainId,
@@ -179,6 +181,7 @@ describe('Forta agent', () => {
 
       expect(findings).toStrictEqual([
         createTokenDepositFinding(
+          tx.hash,
           eoaAddress1,
           halfOfThresholdValue,
           defaultChainId,
@@ -199,6 +202,7 @@ describe('Forta agent', () => {
       // should not fire money laundering finding because the sum of the deposits does not exceed the threshold
       expect(findings).toStrictEqual([
         createTokenDepositFinding(
+          tx.hash,
           eoaAddress1,
           halfOfThresholdValue,
           defaultChainId,
@@ -232,6 +236,7 @@ describe('Forta agent', () => {
       // should not fire money laundering finding because the sum of the deposits does not exceed the threshold within the observation window
       expect(findings).toStrictEqual([
         createTokenDepositFinding(
+          tx.hash,
           eoaAddress1,
           defaultThresholdInWei,
           defaultChainId,
@@ -255,6 +260,7 @@ describe('Forta agent', () => {
 
       expect(findings).toStrictEqual([
         createNativeTokenLaunderingFinding(
+          tx.hash,
           eoaAddress1,
           value,
           [{ timestamp, value }],
@@ -283,6 +289,7 @@ describe('Forta agent', () => {
 
       expect(findings).toStrictEqual([
         createTokenDepositFinding(
+          tx.hash,
           eoaAddress1,
           defaultThresholdInWei,
           defaultChainId,
@@ -303,6 +310,7 @@ describe('Forta agent', () => {
       // should fire an alert
       expect(findings).toStrictEqual([
         createNativeTokenLaunderingFinding(
+          tx.hash,
           eoaAddress1,
           firstDepositValue.plus(secondDepositValue),
           [

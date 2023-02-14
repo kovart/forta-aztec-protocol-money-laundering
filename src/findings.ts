@@ -1,4 +1,4 @@
-import { EntityType, Finding, FindingSeverity, FindingType, LabelType, Network } from 'forta-agent';
+import { EntityType, Finding, FindingSeverity, FindingType, Network } from 'forta-agent';
 import BigNumber from 'bignumber.js';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -9,6 +9,7 @@ dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
 export const createTokenDepositFinding = (
+  txHash: string,
   address: string,
   depositValue: BigNumber,
   chainId: Network,
@@ -27,10 +28,24 @@ export const createTokenDepositFinding = (
     labels: [
       {
         entityType: EntityType.Address,
-        labelType: LabelType.Eoa,
+        label: 'MixerUser',
         confidence: 1,
         entity: address,
-        customValue: '',
+        remove: false,
+      },
+      {
+        entityType: EntityType.Address,
+        label: 'Attacker',
+        confidence: 0.1,
+        entity: address,
+        remove: false,
+      },
+      {
+        entityType: EntityType.Transaction,
+        label: 'MoneyLaundering',
+        confidence: 0.1,
+        entity: txHash,
+        remove: false,
       },
     ],
     metadata: {
@@ -40,6 +55,7 @@ export const createTokenDepositFinding = (
 };
 
 export const createNativeTokenLaunderingFinding = (
+  txHash: string,
   address: string,
   totalDepositValue: BigNumber,
   depositRecords: { timestamp: number; value: BigNumber }[],
@@ -72,10 +88,17 @@ export const createNativeTokenLaunderingFinding = (
     labels: [
       {
         entityType: EntityType.Address,
-        labelType: LabelType.Eoa,
+        label: 'Attacker',
         confidence: 0.75,
         entity: address,
-        customValue: totalDepositValue.toString(),
+        remove: false,
+      },
+      {
+        entityType: EntityType.Transaction,
+        label: 'MoneyLaundering',
+        confidence: 0.75,
+        entity: txHash,
+        remove: false,
       },
     ],
     metadata: {
